@@ -106,11 +106,12 @@ function displayResults(data: any) {
   const plan = data.individualUsage?.plan;
   if (plan) {
     logger.log('\n📊 PLAN USAGE:');
-    logger.log(`  Used: ${plan.used} / ${plan.limit} (${(plan.totalPercentUsed * 100).toFixed(2)}%)`);
-    logger.log(`  Remaining: ${plan.remaining}`);
+    logger.log(`  Used: ${plan.used} / ${plan.limit} (${plan.limit > 0 ? ((plan.used / plan.limit) * 100).toFixed(2) : '0.00'}%)`);
+    logger.log(`  Remaining: ${plan.limit - plan.used}`);
     logger.log(`  Breakdown:`);
     logger.log(`    - Included: ${plan.breakdown?.included || 0}`);
     logger.log(`    - Bonus: ${plan.breakdown?.bonus || 0}`);
+    logger.log(`    - Total: ${plan.breakdown?.total || 0}`);
   }
 
   // On-demand usage
@@ -118,6 +119,10 @@ function displayResults(data: any) {
   if (onDemand && onDemand.enabled) {
     logger.log('\n💰 ON-DEMAND USAGE:');
     logger.log(`  Used: ${onDemand.used}`);
+    if (onDemand.limit !== null) {
+      logger.log(`  Limit: ${onDemand.limit}`);
+      logger.log(`  Remaining: ${onDemand.remaining !== null ? onDemand.remaining : (onDemand.limit - onDemand.used)}`);
+    }
     logger.log(`  Status: Enabled`);
   }
 

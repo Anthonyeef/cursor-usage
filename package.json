@@ -1,7 +1,7 @@
 {
   "name": "cursor-usage",
   "type": "module",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "CLI tool for analyzing Cursor usage and token consumption",
   "author": "yifen <anthonyeef@gmail.com>",
   "license": "MIT",
