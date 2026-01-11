@@ -3,13 +3,13 @@
  * Fetches granular usage events for building daily/weekly reports
  */
 
-import type { CursorCredentials } from './_types';
+import type { CursorCredentials } from './_types.js';
 import {
   CURSOR_API_URL_EVENTS,
   DEFAULT_TIMEOUT,
   USER_AGENT,
-} from './_consts';
-import { logger } from './logger';
+} from './_consts.js';
+import { logger } from './logger.js';
 
 export interface UsageEvent {
   id: string;

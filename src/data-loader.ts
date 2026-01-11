@@ -3,7 +3,7 @@
  * Extracts credentials from local database and fetches usage data from API
  */
 
-import type { CursorCredentials, UsageSummary } from './_types';
+import type { CursorCredentials, UsageSummary } from './_types.js';
 import { readFileSync } from 'node:fs';
 import {
   CURSOR_API_URL,
@@ -14,8 +14,8 @@ import {
   DB_KEY_STATSIG_BOOTSTRAP,
   DEFAULT_TIMEOUT,
   USER_AGENT,
-} from './_consts';
-import { logger } from './logger';
+} from './_consts.js';
+import { logger } from './logger.js';
 import initSqlJs from 'sql.js';
 
 let sqlJs: any = null;

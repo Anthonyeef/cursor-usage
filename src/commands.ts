@@ -2,7 +2,7 @@
  * CLI command handlers
  */
 
-import type { CursorCredentials } from './_types';
+import type { CursorCredentials } from './_types.js';
 import {
   fetchUsageEvents,
   groupByDay,
@@ -15,9 +15,9 @@ import {
   formatWeeklyStatsTable,
   calculateModelBreakdown,
   formatModelBreakdownTable,
-} from './event-loader';
-import { createTable } from './table-formatter';
-import { logger } from './logger';
+} from './event-loader.js';
+import { createTable } from './table-formatter.js';
+import { logger } from './logger.js';
 
 /**
  * Convert stats to JSON

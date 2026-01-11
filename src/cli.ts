@@ -2,21 +2,21 @@
  * CLI command routing and argument handling
  */
 
-import { getCursorCredentials, fetchUsageData } from './data-loader';
+import { getCursorCredentials, fetchUsageData } from './data-loader.js';
 import {
   showDailyReport,
   showMonthlyReport,
   showWeeklyReport,
   showDateReport,
   statsToJSON,
-} from './commands';
-import { logger } from './logger';
+} from './commands.js';
+import { logger } from './logger.js';
 import {
   parseArgs,
   getNumberFlag,
   getDateFlag,
   getBoolFlag,
-} from './args-parser';
+} from './args-parser.js';
 
 export async function runCLI(argv: string[]): Promise<void> {
   const parsed = parseArgs(argv);
