@@ -101,6 +101,10 @@ npm run build           # Compile TypeScript
 
 ### Summary View
 
+```bash
+cursor-usage
+```
+
 ```
 ╭────────────────────────────────────────╮
 │         Cursor Usage Summary           │
@@ -121,6 +125,10 @@ npm run build           # Compile TypeScript
 
 ### Daily Report View
 
+```bash
+cursor-usage daily
+```
+
 ```
 ╭──────────────────────────────────────────────╮
 │  Cursor Usage Report - Daily (Last 7 days)   │
@@ -136,6 +144,10 @@ npm run build           # Compile TypeScript
 ```
 
 ### Monthly Report View
+
+```bash
+cursor-usage monthly
+```
 
 ```
 ╭────────────────────────────────────────────────────╮
@@ -156,6 +168,10 @@ npm run build           # Compile TypeScript
 ```
 
 ### Detailed Event View
+
+```bash
+cursor-usage today
+```
 
 ```
 ╭─────────────────────────────────────────╮
@@ -179,6 +195,10 @@ npm run build           # Compile TypeScript
 
 When using `--breakdown`, reports include a detailed per-model breakdown:
 
+```bash
+cursor-usage daily --breakdown
+```
+
 ```
 ╭────────────────────────────────────────╮
 │          PER-MODEL BREAKDOWN           │
@@ -198,6 +218,10 @@ When using `--breakdown`, reports include a detailed per-model breakdown:
 ### JSON Output (`--json`)
 
 JSON output provides clean, structured data for programmatic use (no table formatting):
+
+```bash
+cursor-usage daily --json
+```
 
 ```json
 {
@@ -238,6 +262,10 @@ JSON output provides clean, structured data for programmatic use (no table forma
 ```
 
 ### Weekly Report View
+
+```bash
+cursor-usage weekly
+```
 
 ```
 ╭─────────────────────────────────────────────────╮
