@@ -310,8 +310,8 @@ export function calculateMonthlyStats(
  */
 export function formatMonthlyStatsTable(stats: any[]): string[][] {
   return stats.map((month) => {
-    const modelList = Array.from(month.models.entries())
-      .map(([model, count]: [string, number]) => `${model}(${count})`)
+    const modelList = Array.from(month.models.entries() as Iterable<[string, number]>)
+      .map(([model, count]) => `${model}(${count})`)
       .join(', ');
 
     return [
@@ -463,8 +463,8 @@ export function calculateWeeklyStats(
  */
 export function formatWeeklyStatsTable(stats: any[]): string[][] {
   return stats.map((week) => {
-    const modelList = Array.from(week.models.entries())
-      .map(([model, count]: [string, number]) => `${model}(${count})`)
+    const modelList = Array.from(week.models.entries() as Iterable<[string, number]>)
+      .map(([model, count]) => `${model}(${count})`)
       .join(', ');
 
     return [

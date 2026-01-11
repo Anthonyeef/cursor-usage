@@ -40,19 +40,34 @@ export async function runCLI(argv: string[]): Promise<void> {
     const days = getNumberFlag(flags, 'days') || getNumberFlag({ [params[0] || '']: params[0] }, '', 7);
     const numDays = params.length > 0 && !isNaN(Number(params[0])) ? Number(params[0]) : days;
 
-    const options = { breakdown, startDate: sinceDate, endDate: untilDate, compact: getBoolFlag(flags, 'compact') };
+    const options = {
+      breakdown,
+      startDate: sinceDate || undefined,
+      endDate: untilDate || undefined,
+      compact: getBoolFlag(flags, 'compact')
+    };
 
     await showDailyReport(credentials, numDays, options, json);
   } else if (command === 'monthly' || command === 'm') {
     const months = params.length > 0 && !isNaN(Number(params[0])) ? Number(params[0]) : 3;
 
-    const options = { breakdown, startDate: sinceDate, endDate: untilDate, compact: getBoolFlag(flags, 'compact') };
+    const options = {
+      breakdown,
+      startDate: sinceDate || undefined,
+      endDate: untilDate || undefined,
+      compact: getBoolFlag(flags, 'compact')
+    };
 
     await showMonthlyReport(credentials, months, options, json);
   } else if (command === 'weekly' || command === 'w') {
     const weeks = params.length > 0 && !isNaN(Number(params[0])) ? Number(params[0]) : 4;
 
-    const options = { breakdown, startDate: sinceDate, endDate: untilDate, compact: getBoolFlag(flags, 'compact') };
+    const options = {
+      breakdown,
+      startDate: sinceDate || undefined,
+      endDate: untilDate || undefined,
+      compact: getBoolFlag(flags, 'compact')
+    };
 
     await showWeeklyReport(credentials, weeks, options, json);
   } else if (command === 'today') {

@@ -1,11 +1,11 @@
-#!/usr/bin/env tsx
+#!/usr/bin/env node
 
 /**
  * Cursor Usage Analyzer
  * A CLI tool for analyzing Cursor API usage and token consumption
  */
 
-import { runCLI } from './cli';
+import { runCLI } from './cli.js';
 
 const argv = process.argv.slice(2);
 

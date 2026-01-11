@@ -32,7 +32,7 @@ export function statsToJSON(
   const totalCost = events.reduce((sum, e) => sum + (e.cost || 0), 0);
   const totalEvents = events.length;
 
-  const data = {
+  const data: any = {
     command,
     generatedAt: new Date().toISOString(),
     period: options.period || command,

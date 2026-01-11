@@ -3,18 +3,39 @@
   "type": "module",
   "version": "0.1.0",
   "description": "CLI tool for analyzing Cursor usage and token consumption",
-  "author": "yifen",
+  "author": "yifen <anthonyeef@gmail.com>",
   "license": "MIT",
-  "main": "./src/index.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Anthonyeef/cursor-usage.git"
+  },
+  "keywords": [
+    "cursor",
+    "cli",
+    "usage",
+    "analytics",
+    "tokens",
+    "api",
+    "cursor-ai"
+  ],
+  "bugs": {
+    "url": "https://github.com/Anthonyeef/cursor-usage/issues"
+  },
+  "homepage": "https://github.com/Anthonyeef/cursor-usage#readme",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "bin": {
-    "cursor-usage": "./src/index.ts"
+    "cursor-usage": "./dist/index.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
     "dev": "tsx src/index.ts",
     "build": "tsc",
+    "prepublishOnly": "npm run build",
     "start": "tsx src/index.ts",
     "test": "vitest",
     "lint": "eslint src/",

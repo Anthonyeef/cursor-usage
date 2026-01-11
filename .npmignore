@@ -1,0 +1,38 @@
+# Source files
+src/
+tsconfig.json
+
+# Development files
+*.log
+*.tmp
+.DS_Store
+
+# Documentation (except README)
+docs/
+
+# Test files
+*.test.ts
+*.spec.ts
+__tests__/
+coverage/
+
+# Build tools
+.eslintrc*
+.prettierrc*
+vitest.config.*
+
+# Version control
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# CI/CD
+.github/
+
+# Node modules
+node_modules/
