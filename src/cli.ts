@@ -6,6 +6,7 @@ import { getCursorCredentials, fetchUsageData } from './data-loader';
 import {
   showDailyReport,
   showMonthlyReport,
+  showWeeklyReport,
   showDateReport,
   statsToJSON,
 } from './commands';
@@ -39,34 +40,25 @@ export async function runCLI(argv: string[]): Promise<void> {
     const days = getNumberFlag(flags, 'days') || getNumberFlag({ [params[0] || '']: params[0] }, '', 7);
     const numDays = params.length > 0 && !isNaN(Number(params[0])) ? Number(params[0]) : days;
 
-    const options = { breakdown, startDate: sinceDate, endDate: untilDate };
+    const options = { breakdown, startDate: sinceDate, endDate: untilDate, compact: getBoolFlag(flags, 'compact') };
 
-    if (json) {
-      console.log('Note: JSON output for date ranges not yet fully supported');
-      return;
-    }
-
-    await showDailyReport(credentials, numDays, options);
+    await showDailyReport(credentials, numDays, options, json);
   } else if (command === 'monthly' || command === 'm') {
     const months = params.length > 0 && !isNaN(Number(params[0])) ? Number(params[0]) : 3;
 
-    const options = { breakdown, startDate: sinceDate, endDate: untilDate };
+    const options = { breakdown, startDate: sinceDate, endDate: untilDate, compact: getBoolFlag(flags, 'compact') };
 
-    if (json) {
-      console.log('Note: JSON output for date ranges not yet fully supported');
-      return;
-    }
+    await showMonthlyReport(credentials, months, options, json);
+  } else if (command === 'weekly' || command === 'w') {
+    const weeks = params.length > 0 && !isNaN(Number(params[0])) ? Number(params[0]) : 4;
 
-    await showMonthlyReport(credentials, months, options);
+    const options = { breakdown, startDate: sinceDate, endDate: untilDate, compact: getBoolFlag(flags, 'compact') };
+
+    await showWeeklyReport(credentials, weeks, options, json);
   } else if (command === 'today') {
-    const options = { breakdown };
+    const options = { breakdown, compact: getBoolFlag(flags, 'compact') };
 
-    if (json) {
-      console.log('Note: JSON output for today not yet implemented');
-      return;
-    }
-
-    await showDateReport(credentials, new Date(), options);
+    await showDateReport(credentials, new Date(), options, json);
   } else if (command === 'help' || command === '-h' || command === '--help') {
     showHelp();
   } else {
@@ -151,6 +143,8 @@ Commands:
   (none)        Show current billing summary (default)
   daily [N]     Show daily usage for last N days (default: 7)
   d [N]         Alias for 'daily'
+  weekly [N]    Show weekly usage for last N weeks (default: 4)
+  w [N]         Alias for 'weekly'
   monthly [N]   Show monthly usage for last N months (default: 3)
   m [N]         Alias for 'monthly'
   today         Show detailed usage for today
@@ -161,7 +155,7 @@ Flags:
   --since DATE     Start date (YYYY-MM-DD)
   --until DATE     End date (YYYY-MM-DD)
   --breakdown      Show per-model breakdown
-  --json           Output as JSON
+  --json           Output as JSON (in development)
   --compact        Compact table format
 
 Examples:
@@ -169,10 +163,12 @@ Examples:
   cursor-usage daily                                     # Show last 7 days
   cursor-usage daily 30                                  # Show last 30 days
   cursor-usage daily --since 2026-01-01 --until 2026-01-15
+  cursor-usage weekly                                    # Show last 4 weeks
+  cursor-usage weekly 8                                  # Show last 8 weeks
   cursor-usage monthly                                   # Show last 3 months
   cursor-usage monthly 6                                 # Show last 6 months
   cursor-usage daily --breakdown                         # With model breakdown
-  cursor-usage monthly --breakdown --json                # JSON output
+  cursor-usage weekly --breakdown --json                 # JSON output
   cursor-usage today                                     # Today's details
 
 Environment Variables:

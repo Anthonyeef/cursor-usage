@@ -10,6 +10,9 @@ import {
   groupByMonth,
   calculateMonthlyStats,
   formatMonthlyStatsTable,
+  groupByWeek,
+  calculateWeeklyStats,
+  formatWeeklyStatsTable,
   calculateModelBreakdown,
   formatModelBreakdownTable,
 } from './event-loader';
@@ -86,7 +89,8 @@ function displayBreakdown(events: any[], title: string = 'MODEL BREAKDOWN') {
 export async function showDailyReport(
   credentials: CursorCredentials,
   days: number = 7,
-  options: { breakdown?: boolean; startDate?: Date; endDate?: Date } = {}
+  options: { breakdown?: boolean; startDate?: Date; endDate?: Date; compact?: boolean } = {},
+  outputJson: boolean = false
 ) {
   let startDate = options.startDate;
   let endDate = options.endDate;
@@ -159,6 +163,12 @@ export async function showDailyReport(
   if (options.breakdown) {
     displayBreakdown(events, 'PER-MODEL BREAKDOWN');
   }
+
+  // Output JSON if requested
+  if (outputJson) {
+    const jsonOutput = statsToJSON('daily', stats, events, { breakdown: options.breakdown, period: `last ${days} days` });
+    console.log(jsonOutput);
+  }
 }
 
 /**
@@ -167,7 +177,8 @@ export async function showDailyReport(
 export async function showMonthlyReport(
   credentials: CursorCredentials,
   months: number = 3,
-  options: { breakdown?: boolean; startDate?: Date; endDate?: Date } = {}
+  options: { breakdown?: boolean; startDate?: Date; endDate?: Date; compact?: boolean } = {},
+  outputJson: boolean = false
 ) {
   let startDate = options.startDate;
   let endDate = options.endDate;
@@ -228,6 +239,87 @@ export async function showMonthlyReport(
   if (options.breakdown) {
     displayBreakdown(events, 'PER-MODEL BREAKDOWN');
   }
+
+  // Output JSON if requested
+  if (outputJson) {
+    const jsonOutput = statsToJSON('monthly', stats, events, { breakdown: options.breakdown, period: `last ${months} months` });
+    console.log(jsonOutput);
+  }
+}
+
+/**
+ * Show weekly usage report
+ */
+export async function showWeeklyReport(
+  credentials: CursorCredentials,
+  weeks: number = 4,
+  options: { breakdown?: boolean; startDate?: Date; endDate?: Date; compact?: boolean } = {},
+  outputJson: boolean = false
+) {
+  let startDate = options.startDate;
+  let endDate = options.endDate;
+
+  if (!startDate || !endDate) {
+    endDate = endDate || new Date();
+    startDate = startDate || new Date();
+    startDate.setDate(startDate.getDate() - weeks * 7);
+
+    // Set to start of day
+    startDate.setHours(0, 0, 0, 0);
+    endDate.setHours(23, 59, 59, 999);
+  }
+
+  const events = await fetchUsageEvents(credentials, startDate, endDate);
+
+  if (events.length === 0) {
+    logger.warn('No usage events found for this period');
+    return;
+  }
+
+  logger.log('');
+
+  // Group and calculate stats
+  const grouped = groupByWeek(events);
+  const stats = calculateWeeklyStats(grouped);
+
+  // Display table
+  logger.log('\n' + '='.repeat(120));
+  logger.log(`WEEKLY USAGE REPORT (Last ${weeks} weeks)`);
+  logger.log('='.repeat(120) + '\n');
+
+  const tableData = formatWeeklyStatsTable(stats);
+
+  const table = createTable(
+    ['Week', 'Events', 'Total Tokens', 'Input', 'Output', 'Cost', 'Models'],
+    tableData
+  );
+
+  logger.log(table);
+
+  // Summary
+  const totalEvents = stats.reduce((sum, week) => sum + week.eventCount, 0);
+  const totalTokens = stats.reduce((sum, week) => sum + week.totalTokens, 0);
+  const totalCost = stats.reduce((sum, week) => sum + week.totalCost, 0);
+
+  logger.log('\n' + '='.repeat(120));
+  logger.log('SUMMARY');
+  logger.log('='.repeat(120));
+  logger.log(`Total Events: ${totalEvents}`);
+  logger.log(`Total Tokens: ${totalTokens.toLocaleString()}`);
+  logger.log(`Total Cost: $${totalCost.toFixed(2)}`);
+  logger.log(`Average per week: ${(totalTokens / Math.max(1, stats.length)).toLocaleString()} tokens, $${(totalCost / Math.max(1, stats.length)).toFixed(2)}`);
+  logger.log('='.repeat(120) + '\n');
+
+  // Show breakdown if requested
+  if (options.breakdown) {
+    displayBreakdown(events, 'PER-MODEL BREAKDOWN');
+  }
+
+  // Output JSON if requested
+  if (outputJson) {
+    const jsonOutput = statsToJSON('weekly', stats, events, { breakdown: options.breakdown, period: `last ${weeks} weeks` });
+    console.log(jsonOutput);
+  }
 }
 
 /**
@@ -235,7 +327,9 @@ export async function showMonthlyReport(
  */
 export async function showDateReport(
   credentials: CursorCredentials,
-  date: Date
+  date: Date,
+  options: { breakdown?: boolean; compact?: boolean } = {},
+  outputJson: boolean = false
 ) {
   const startDate = new Date(date);
   startDate.setHours(0, 0, 0, 0);
@@ -286,4 +380,15 @@ export async function showDateReport(
   logger.log(`Total Tokens: ${totalTokens.toLocaleString()}`);
   logger.log(`Total Cost: $${totalCost.toFixed(2)}`);
   logger.log('='.repeat(120) + '\n');
+
+  // Show breakdown if requested
+  if (options.breakdown) {
+    displayBreakdown(events, 'PER-MODEL BREAKDOWN');
+  }
+
+  // Output JSON if requested
+  if (outputJson) {
+    const jsonOutput = statsToJSON('today', events.map((e, i) => ({ ...e, eventIndex: i })), events, { breakdown: options.breakdown, period: 'today' });
+    console.log(jsonOutput);
+  }
 }

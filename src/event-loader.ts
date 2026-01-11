@@ -382,3 +382,99 @@ export function formatModelBreakdownTable(
     ];
   });
 }
+
+/**
+ * Group events by week
+ */
+export function groupByWeek(
+  events: UsageEvent[]
+): Map<string, UsageEvent[]> {
+  const grouped = new Map<string, UsageEvent[]>();
+
+  events.forEach((event) => {
+    const date = new Date(event.timestamp);
+    // ISO week starts on Monday
+    const weekStart = new Date(date);
+    const day = weekStart.getUTCDay();
+    const diff = weekStart.getUTCDate() - day + (day === 0 ? -6 : 1);
+    weekStart.setUTCDate(diff);
+    weekStart.setUTCHours(0, 0, 0, 0);
+
+    const weekKey = weekStart.toISOString().split('T')[0];
+
+    if (!grouped.has(weekKey)) {
+      grouped.set(weekKey, []);
+    }
+    grouped.get(weekKey)!.push(event);
+  });
+
+  return grouped;
+}
+
+/**
+ * Calculate weekly statistics
+ */
+export function calculateWeeklyStats(
+  groupedEvents: Map<string, UsageEvent[]>
+): any[] {
+  const stats: any[] = [];
+
+  Array.from(groupedEvents.entries())
+    .sort()
+    .forEach(([weekKey, events]) => {
+      const weekStart = new Date(weekKey);
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekEnd.getDate() + 6);
+
+      const models = new Map<string, number>();
+
+      let totalTokens = 0;
+      let inputTokens = 0;
+      let outputTokens = 0;
+      let totalCost = 0;
+
+      events.forEach((event) => {
+        totalTokens += event.tokens;
+        inputTokens += event.inputTokens;
+        outputTokens += event.outputTokens;
+        totalCost += event.cost || 0;
+
+        const count = models.get(event.model) || 0;
+        models.set(event.model, count + 1);
+      });
+
+      stats.push({
+        weekStart: weekKey,
+        weekEnd: weekEnd.toISOString().split('T')[0],
+        eventCount: events.length,
+        totalTokens,
+        inputTokens,
+        outputTokens,
+        totalCost,
+        models,
+      });
+    });
+
+  return stats;
+}
+
+/**
+ * Format weekly stats for table display
+ */
+export function formatWeeklyStatsTable(stats: any[]): string[][] {
+  return stats.map((week) => {
+    const modelList = Array.from(week.models.entries())
+      .map(([model, count]: [string, number]) => `${model}(${count})`)
+      .join(', ');
+
+    return [
+      `${week.weekStart} to ${week.weekEnd}`,
+      week.eventCount.toString(),
+      week.totalTokens.toLocaleString(),
+      week.inputTokens.toLocaleString(),
+      week.outputTokens.toLocaleString(),
+      `$${week.totalCost.toFixed(2)}`,
+      modelList || 'N/A',
+    ];
+  });
+}
