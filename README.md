@@ -16,8 +16,16 @@ A CLI tool for analyzing Cursor API usage and membership information, inspired b
 
 ## Installation
 
+Install the package globally using npm:
+
 ```bash
-npm install
+npm install -g cursor-usage
+```
+
+Or use it directly without installation:
+
+```bash
+npx cursor-usage@latest
 ```
 
 ## Quick Test
