@@ -24,9 +24,7 @@
   "homepage": "https://github.com/Anthonyeef/cursor-usage#readme",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "bin": {
-    "cursor-usage": "./dist/index.js"
-  },
+  "bin": "dist/index.js",
   "files": [
     "dist",
     "README.md",
