@@ -16,7 +16,14 @@ import {
   calculateModelBreakdown,
   formatModelBreakdownTable,
 } from './event-loader.js';
-import { createTable } from './table-formatter.js';
+import {
+  createTable,
+  createTitleBox,
+  formatNumber,
+  formatCurrency,
+  formatTotalsRow,
+  colors,
+} from './table-formatter.js';
 import { logger } from './logger.js';
 
 /**
@@ -70,14 +77,13 @@ function displayBreakdown(events: any[], title: string = 'MODEL BREAKDOWN') {
   const totalTokens = events.reduce((sum, e) => sum + e.tokens, 0);
   const totalCost = events.reduce((sum, e) => sum + (e.cost || 0), 0);
 
-  logger.log('\n' + '='.repeat(100));
-  logger.log(title);
-  logger.log('='.repeat(100) + '\n');
+  logger.log(createTitleBox(title));
 
   const tableData = formatModelBreakdownTable(breakdown, totalTokens, totalCost);
   const table = createTable(
     ['Model', 'Events', 'Total Tokens', 'Cost', 'Token %', 'Cost %'],
-    tableData
+    tableData,
+    ['left', 'right', 'right', 'right', 'right', 'right']
   );
 
   logger.log(table + '\n');
@@ -121,13 +127,8 @@ export async function showDailyReport(
     const jsonOutput = statsToJSON('daily', stats, events, { breakdown: options.breakdown, period: `last ${days} days` });
     console.log(jsonOutput);
   } else {
-    // Display table and summary
-    logger.log('');
-
-    // Display table
-    logger.log('\n' + '='.repeat(100));
-    logger.log(`DAILY USAGE REPORT (Last ${days} days)`);
-    logger.log('='.repeat(100) + '\n');
+    // Display title box
+    logger.log(createTitleBox(`Cursor Usage Report - Daily (Last ${days} days)`));
 
     const tableData = stats.map((day) => {
       const modelList = Array.from(day.models.entries())
@@ -137,33 +138,39 @@ export async function showDailyReport(
       return [
         day.date,
         day.eventCount.toString(),
-        day.totalTokens.toLocaleString(),
-        day.inputTokens.toLocaleString(),
-        day.outputTokens.toLocaleString(),
-        `$${day.totalCost.toFixed(2)}`,
+        formatNumber(day.totalTokens),
+        formatNumber(day.inputTokens),
+        formatNumber(day.outputTokens),
+        formatCurrency(day.totalCost),
         modelList || 'N/A',
       ];
     });
 
-    const table = createTable(
-      ['Date', 'Events', 'Total Tokens', 'Input', 'Output', 'Cost', 'Models'],
-      tableData
-    );
-
-    logger.log(table);
-
-    // Summary
+    // Calculate totals
     const totalEvents = stats.reduce((sum, day) => sum + day.eventCount, 0);
     const totalTokens = stats.reduce((sum, day) => sum + day.totalTokens, 0);
+    const totalInputTokens = stats.reduce((sum, day) => sum + day.inputTokens, 0);
+    const totalOutputTokens = stats.reduce((sum, day) => sum + day.outputTokens, 0);
     const totalCost = stats.reduce((sum, day) => sum + day.totalCost, 0);
 
-    logger.log('\n' + '='.repeat(100));
-    logger.log('SUMMARY');
-    logger.log('='.repeat(100));
-    logger.log(`Total Events: ${totalEvents}`);
-    logger.log(`Total Tokens: ${totalTokens.toLocaleString()}`);
-    logger.log(`Total Cost: $${totalCost.toFixed(2)}`);
-    logger.log('='.repeat(100) + '\n');
+    // Add totals row
+    tableData.push(formatTotalsRow([
+      'Total',
+      totalEvents.toString(),
+      formatNumber(totalTokens),
+      formatNumber(totalInputTokens),
+      formatNumber(totalOutputTokens),
+      formatCurrency(totalCost),
+      '',
+    ]));
+
+    const table = createTable(
+      ['Date', 'Events', 'Total Tokens', 'Input', 'Output', 'Cost', 'Models'],
+      tableData,
+      ['left', 'right', 'right', 'right', 'right', 'right', 'left']
+    );
+
+    logger.log(table + '\n');
 
     // Show breakdown if requested
     if (options.breakdown) {
@@ -211,36 +218,36 @@ export async function showMonthlyReport(
     const jsonOutput = statsToJSON('monthly', stats, events, { breakdown: options.breakdown, period: `last ${months} months` });
     console.log(jsonOutput);
   } else {
-    // Display table and summary
-    logger.log('');
-
-    // Display table
-    logger.log('\n' + '='.repeat(100));
-    logger.log(`MONTHLY USAGE REPORT (Last ${months} months)`);
-    logger.log('='.repeat(100) + '\n');
+    // Display title box
+    logger.log(createTitleBox(`Cursor Usage Report - Monthly (Last ${months} months)`));
 
     const tableData = formatMonthlyStatsTable(stats);
 
-    const table = createTable(
-      ['Month', 'Events', 'Total Tokens', 'Input', 'Output', 'Cost', 'Models'],
-      tableData
-    );
-
-    logger.log(table);
-
-    // Summary
+    // Calculate totals
     const totalEvents = stats.reduce((sum, month) => sum + month.eventCount, 0);
     const totalTokens = stats.reduce((sum, month) => sum + month.totalTokens, 0);
+    const totalInputTokens = stats.reduce((sum, month) => sum + month.inputTokens, 0);
+    const totalOutputTokens = stats.reduce((sum, month) => sum + month.outputTokens, 0);
     const totalCost = stats.reduce((sum, month) => sum + month.totalCost, 0);
 
-    logger.log('\n' + '='.repeat(100));
-    logger.log('SUMMARY');
-    logger.log('='.repeat(100));
-    logger.log(`Total Events: ${totalEvents}`);
-    logger.log(`Total Tokens: ${totalTokens.toLocaleString()}`);
-    logger.log(`Total Cost: $${totalCost.toFixed(2)}`);
-    logger.log(`Average per month: ${(totalTokens / Math.max(1, stats.length)).toLocaleString()} tokens, $${(totalCost / Math.max(1, stats.length)).toFixed(2)}`);
-    logger.log('='.repeat(100) + '\n');
+    // Add totals row
+    tableData.push(formatTotalsRow([
+      'Total',
+      totalEvents.toString(),
+      formatNumber(totalTokens),
+      formatNumber(totalInputTokens),
+      formatNumber(totalOutputTokens),
+      formatCurrency(totalCost),
+      '',
+    ]));
+
+    const table = createTable(
+      ['Month', 'Events', 'Total Tokens', 'Input', 'Output', 'Cost', 'Models'],
+      tableData,
+      ['left', 'right', 'right', 'right', 'right', 'right', 'left']
+    );
+
+    logger.log(table + '\n');
 
     // Show breakdown if requested
     if (options.breakdown) {
@@ -287,36 +294,36 @@ export async function showWeeklyReport(
     const jsonOutput = statsToJSON('weekly', stats, events, { breakdown: options.breakdown, period: `last ${weeks} weeks` });
     console.log(jsonOutput);
   } else {
-    // Display table and summary
-    logger.log('');
-
-    // Display table
-    logger.log('\n' + '='.repeat(120));
-    logger.log(`WEEKLY USAGE REPORT (Last ${weeks} weeks)`);
-    logger.log('='.repeat(120) + '\n');
+    // Display title box
+    logger.log(createTitleBox(`Cursor Usage Report - Weekly (Last ${weeks} weeks)`));
 
     const tableData = formatWeeklyStatsTable(stats);
 
-    const table = createTable(
-      ['Week', 'Events', 'Total Tokens', 'Input', 'Output', 'Cost', 'Models'],
-      tableData
-    );
-
-    logger.log(table);
-
-    // Summary
+    // Calculate totals
     const totalEvents = stats.reduce((sum, week) => sum + week.eventCount, 0);
     const totalTokens = stats.reduce((sum, week) => sum + week.totalTokens, 0);
+    const totalInputTokens = stats.reduce((sum, week) => sum + week.inputTokens, 0);
+    const totalOutputTokens = stats.reduce((sum, week) => sum + week.outputTokens, 0);
     const totalCost = stats.reduce((sum, week) => sum + week.totalCost, 0);
 
-    logger.log('\n' + '='.repeat(120));
-    logger.log('SUMMARY');
-    logger.log('='.repeat(120));
-    logger.log(`Total Events: ${totalEvents}`);
-    logger.log(`Total Tokens: ${totalTokens.toLocaleString()}`);
-    logger.log(`Total Cost: $${totalCost.toFixed(2)}`);
-    logger.log(`Average per week: ${(totalTokens / Math.max(1, stats.length)).toLocaleString()} tokens, $${(totalCost / Math.max(1, stats.length)).toFixed(2)}`);
-    logger.log('='.repeat(120) + '\n');
+    // Add totals row
+    tableData.push(formatTotalsRow([
+      'Total',
+      totalEvents.toString(),
+      formatNumber(totalTokens),
+      formatNumber(totalInputTokens),
+      formatNumber(totalOutputTokens),
+      formatCurrency(totalCost),
+      '',
+    ]));
+
+    const table = createTable(
+      ['Week', 'Events', 'Total Tokens', 'Input', 'Output', 'Cost', 'Models'],
+      tableData,
+      ['left', 'right', 'right', 'right', 'right', 'right', 'left']
+    );
+
+    logger.log(table + '\n');
 
     // Show breakdown if requested
     if (options.breakdown) {
@@ -352,13 +359,8 @@ export async function showDateReport(
     const jsonOutput = statsToJSON('today', events.map((e, i) => ({ ...e, eventIndex: i })), events, { breakdown: options.breakdown, period: 'today' });
     console.log(jsonOutput);
   } else {
-    // Display table and summary
-    logger.log('');
-
-    // Display detailed events
-    logger.log('\n' + '='.repeat(120));
-    logger.log(`USAGE EVENTS FOR ${date.toDateString()}`);
-    logger.log('='.repeat(120) + '\n');
+    // Display title box
+    logger.log(createTitleBox(`Cursor Usage Report - ${date.toDateString()}`));
 
     const tableData = events.map((event) => {
       const timestamp = new Date(event.timestamp).toLocaleTimeString();
@@ -366,29 +368,37 @@ export async function showDateReport(
         timestamp,
         event.model,
         event.type,
-        event.inputTokens.toLocaleString(),
-        event.outputTokens.toLocaleString(),
-        event.tokens.toLocaleString(),
-        `$${event.cost?.toFixed(4) || '0.0000'}`,
+        formatNumber(event.inputTokens),
+        formatNumber(event.outputTokens),
+        formatNumber(event.tokens),
+        formatCurrency(event.cost || 0),
       ];
     });
 
-    const table = createTable(
-      ['Time', 'Model', 'Type', 'Input Tokens', 'Output Tokens', 'Total Tokens', 'Cost'],
-      tableData
-    );
-
-    logger.log(table);
-
-    // Summary
+    // Calculate totals
+    const totalInputTokens = events.reduce((sum, e) => sum + e.inputTokens, 0);
+    const totalOutputTokens = events.reduce((sum, e) => sum + e.outputTokens, 0);
     const totalTokens = events.reduce((sum, e) => sum + e.tokens, 0);
     const totalCost = events.reduce((sum, e) => sum + (e.cost || 0), 0);
 
-    logger.log('\n' + '='.repeat(120));
-    logger.log(`Total Events: ${events.length}`);
-    logger.log(`Total Tokens: ${totalTokens.toLocaleString()}`);
-    logger.log(`Total Cost: $${totalCost.toFixed(2)}`);
-    logger.log('='.repeat(120) + '\n');
+    // Add totals row
+    tableData.push(formatTotalsRow([
+      'Total',
+      '',
+      '',
+      formatNumber(totalInputTokens),
+      formatNumber(totalOutputTokens),
+      formatNumber(totalTokens),
+      formatCurrency(totalCost),
+    ]));
+
+    const table = createTable(
+      ['Time', 'Model', 'Type', 'Input Tokens', 'Output Tokens', 'Total Tokens', 'Cost'],
+      tableData,
+      ['left', 'left', 'left', 'right', 'right', 'right', 'right']
+    );
+
+    logger.log(table + '\n');
 
     // Show breakdown if requested
     if (options.breakdown) {

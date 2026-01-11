@@ -17,6 +17,7 @@ import {
   getDateFlag,
   getBoolFlag,
 } from './args-parser.js';
+import { createTitleBox, colors } from './table-formatter.js';
 
 export async function runCLI(argv: string[]): Promise<void> {
   const parsed = parseArgs(argv);
@@ -91,53 +92,57 @@ export async function runCLI(argv: string[]): Promise<void> {
 }
 
 function displayResults(data: any) {
-  logger.log('='.repeat(70));
-  logger.log('CURSOR USAGE SUMMARY');
-  logger.log('='.repeat(70));
+  logger.log(createTitleBox('Cursor Usage Summary'));
 
   // Membership and plan info
-  logger.log('\n📋 ACCOUNT INFORMATION:');
-  logger.log(`  Membership: ${data.membershipType || 'N/A'}`);
+  logger.log(colors.cyan('📋 ACCOUNT INFORMATION'));
+  logger.log(`  ${colors.dim('Membership:')}     ${colors.yellow(data.membershipType || 'N/A')}`);
   logger.log(
-    `  Billing Cycle: ${formatDate(data.billingCycleStart)} to ${formatDate(data.billingCycleEnd)}`
+    `  ${colors.dim('Billing Cycle:')} ${colors.yellow(formatDate(data.billingCycleStart))} to ${colors.yellow(formatDate(data.billingCycleEnd))}`
   );
 
   // Plan usage
   const plan = data.individualUsage?.plan;
   if (plan) {
-    logger.log('\n📊 PLAN USAGE:');
-    logger.log(`  Used: ${plan.used} / ${plan.limit} (${plan.limit > 0 ? ((plan.used / plan.limit) * 100).toFixed(2) : '0.00'}%)`);
-    logger.log(`  Remaining: ${plan.limit - plan.used}`);
-    logger.log(`  Breakdown:`);
-    logger.log(`    - Included: ${plan.breakdown?.included || 0}`);
-    logger.log(`    - Bonus: ${plan.breakdown?.bonus || 0}`);
-    logger.log(`    - Total: ${plan.breakdown?.total || 0}`);
+    logger.log('');
+    logger.log(colors.cyan('📊 PLAN USAGE'));
+    const percentage = plan.limit > 0 ? ((plan.used / plan.limit) * 100).toFixed(2) : '0.00';
+    logger.log(`  ${colors.dim('Used:')}      ${colors.yellow(`${plan.used} / ${plan.limit}`)} (${colors.green(percentage + '%')})`);
+    logger.log(`  ${colors.dim('Remaining:')} ${colors.yellow(String(plan.limit - plan.used))}`);
+    logger.log(`  ${colors.dim('Breakdown:')}`);
+    logger.log(`    ${colors.dim('- Included:')} ${colors.yellow(String(plan.breakdown?.included || 0))}`);
+    logger.log(`    ${colors.dim('- Bonus:')}    ${colors.yellow(String(plan.breakdown?.bonus || 0))}`);
+    logger.log(`    ${colors.dim('- Total:')}    ${colors.yellow(String(plan.breakdown?.total || 0))}`);
   }
 
   // On-demand usage
   const onDemand = data.individualUsage?.onDemand;
   if (onDemand && onDemand.enabled) {
-    logger.log('\n💰 ON-DEMAND USAGE:');
-    logger.log(`  Used: ${onDemand.used}`);
+    logger.log('');
+    logger.log(colors.cyan('💰 ON-DEMAND USAGE'));
+    logger.log(`  ${colors.dim('Used:')}   ${colors.yellow(String(onDemand.used))}`);
     if (onDemand.limit !== null) {
-      logger.log(`  Limit: ${onDemand.limit}`);
-      logger.log(`  Remaining: ${onDemand.remaining !== null ? onDemand.remaining : (onDemand.limit - onDemand.used)}`);
+      logger.log(`  ${colors.dim('Limit:')}  ${colors.yellow(String(onDemand.limit))}`);
+      const remaining = onDemand.remaining !== null ? onDemand.remaining : (onDemand.limit - onDemand.used);
+      logger.log(`  ${colors.dim('Remaining:')} ${colors.yellow(String(remaining))}`);
     }
-    logger.log(`  Status: Enabled`);
+    logger.log(`  ${colors.dim('Status:')} ${colors.green('Enabled')}`);
   }
 
   // Display messages
   if (data.autoModelSelectedDisplayMessage) {
-    logger.log('\n📢 AUTO MODEL MESSAGE:');
-    logger.log(`  ${data.autoModelSelectedDisplayMessage}`);
+    logger.log('');
+    logger.log(colors.cyan('📢 AUTO MODEL MESSAGE'));
+    logger.log(`  ${colors.dim(data.autoModelSelectedDisplayMessage)}`);
   }
 
   if (data.namedModelSelectedDisplayMessage) {
-    logger.log('\n💬 NAMED MODEL MESSAGE:');
-    logger.log(`  ${data.namedModelSelectedDisplayMessage}`);
+    logger.log('');
+    logger.log(colors.cyan('💬 NAMED MODEL MESSAGE'));
+    logger.log(`  ${colors.dim(data.namedModelSelectedDisplayMessage)}`);
   }
 
-  logger.log('\n' + '='.repeat(70) + '\n');
+  logger.log('');
 }
 
 function formatDate(dateString: string): string {
