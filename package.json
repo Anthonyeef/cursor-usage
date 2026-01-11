@@ -1,0 +1,34 @@
+{
+  "name": "cursor-usage",
+  "type": "module",
+  "version": "0.1.0",
+  "description": "CLI tool for analyzing Cursor usage and token consumption",
+  "author": "yifen",
+  "license": "MIT",
+  "main": "./src/index.ts",
+  "bin": {
+    "cursor-usage": "./src/index.ts"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "tsc",
+    "start": "tsx src/index.ts",
+    "test": "vitest",
+    "lint": "eslint src/",
+    "format": "prettier --write src/"
+  },
+  "dependencies": {
+    "sql.js": "^1.8.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.6",
+    "typescript": "^5.3.3",
+    "tsx": "^4.7.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
