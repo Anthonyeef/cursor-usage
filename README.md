@@ -31,6 +31,10 @@ bunx cursor-usage@latest
 # Test specific commands
 npx cursor-usage@latest daily
 npx cursor-usage@latest monthly
+
+# Test with flags
+npx cursor-usage@latest daily --breakdown
+npx cursor-usage@latest weekly --json
 ```
 
 ## Usage
@@ -60,7 +64,27 @@ npm run dev -- today
 
 # Show help
 npm run dev -- help
+
+# Show usage with date range
+npm run dev -- daily --since 2026-01-01 --until 2026-01-15
+
+# Show usage with model breakdown
+npm run dev -- daily --breakdown
+
+# Show compact table format
+npm run dev -- monthly --compact
+
+# Output as JSON (detailed reports only)
+npm run dev -- daily --json
 ```
+
+### Flags
+
+- `--since DATE` - Start date (YYYY-MM-DD)
+- `--until DATE` - End date (YYYY-MM-DD)
+- `--breakdown` - Show per-model breakdown
+- `--json` - Output as JSON (in development)
+- `--compact` - Compact table format
 
 ### Development
 
