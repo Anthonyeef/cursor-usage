@@ -325,3 +325,60 @@ export function formatMonthlyStatsTable(stats: any[]): string[][] {
     ];
   });
 }
+
+/**
+ * Calculate per-model breakdown
+ */
+export function calculateModelBreakdown(events: UsageEvent[]): Map<string, any> {
+  const breakdown = new Map<string, any>();
+
+  events.forEach((event) => {
+    const model = event.model || 'unknown';
+    if (!breakdown.has(model)) {
+      breakdown.set(model, {
+        model,
+        count: 0,
+        totalTokens: 0,
+        inputTokens: 0,
+        outputTokens: 0,
+        totalCost: 0,
+      });
+    }
+
+    const stats = breakdown.get(model)!;
+    stats.count += 1;
+    stats.totalTokens += event.tokens;
+    stats.inputTokens += event.inputTokens;
+    stats.outputTokens += event.outputTokens;
+    stats.totalCost += event.cost || 0;
+  });
+
+  return breakdown;
+}
+
+/**
+ * Format model breakdown for display
+ */
+export function formatModelBreakdownTable(
+  breakdown: Map<string, any>,
+  totalTokens: number,
+  totalCost: number
+): string[][] {
+  const sorted = Array.from(breakdown.values()).sort(
+    (a, b) => b.totalTokens - a.totalTokens
+  );
+
+  return sorted.map((model) => {
+    const tokenPercent = totalTokens > 0 ? (model.totalTokens / totalTokens * 100).toFixed(1) : '0.0';
+    const costPercent = totalCost > 0 ? (model.totalCost / totalCost * 100).toFixed(1) : '0.0';
+
+    return [
+      model.model,
+      model.count.toString(),
+      model.totalTokens.toLocaleString(),
+      `$${model.totalCost.toFixed(2)}`,
+      `${tokenPercent}%`,
+      `${costPercent}%`,
+    ];
+  });
+}

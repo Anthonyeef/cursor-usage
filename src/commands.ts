@@ -10,24 +10,96 @@ import {
   groupByMonth,
   calculateMonthlyStats,
   formatMonthlyStatsTable,
+  calculateModelBreakdown,
+  formatModelBreakdownTable,
 } from './event-loader';
 import { createTable } from './table-formatter';
 import { logger } from './logger';
+
+/**
+ * Convert stats to JSON
+ */
+export function statsToJSON(
+  command: string,
+  stats: any[],
+  events: any[],
+  options: any = {}
+): string {
+  const totalTokens = events.reduce((sum, e) => sum + e.tokens, 0);
+  const totalCost = events.reduce((sum, e) => sum + (e.cost || 0), 0);
+  const totalEvents = events.length;
+
+  const data = {
+    command,
+    generatedAt: new Date().toISOString(),
+    period: options.period || command,
+    timeRange: options.timeRange,
+    summary: {
+      totalEvents,
+      totalTokens,
+      totalCost: parseFloat(totalCost.toFixed(2)),
+    },
+    data: stats,
+  };
+
+  if (options.breakdown) {
+    const breakdown = calculateModelBreakdown(events);
+    data.breakdown = Array.from(breakdown.values()).map((model) => ({
+      model: model.model,
+      count: model.count,
+      totalTokens: model.totalTokens,
+      inputTokens: model.inputTokens,
+      outputTokens: model.outputTokens,
+      totalCost: parseFloat(model.totalCost.toFixed(2)),
+      tokenPercent: parseFloat(((model.totalTokens / totalTokens) * 100).toFixed(2)),
+      costPercent: parseFloat(((model.totalCost / totalCost) * 100).toFixed(2)),
+    }));
+  }
+
+  return JSON.stringify(data, null, 2);
+}
+
+/**
+ * Display model breakdown
+ */
+function displayBreakdown(events: any[], title: string = 'MODEL BREAKDOWN') {
+  const breakdown = calculateModelBreakdown(events);
+  const totalTokens = events.reduce((sum, e) => sum + e.tokens, 0);
+  const totalCost = events.reduce((sum, e) => sum + (e.cost || 0), 0);
+
+  logger.log('\n' + '='.repeat(100));
+  logger.log(title);
+  logger.log('='.repeat(100) + '\n');
+
+  const tableData = formatModelBreakdownTable(breakdown, totalTokens, totalCost);
+  const table = createTable(
+    ['Model', 'Events', 'Total Tokens', 'Cost', 'Token %', 'Cost %'],
+    tableData
+  );
+
+  logger.log(table + '\n');
+}
 
 /**
  * Show daily usage report for a date range
  */
 export async function showDailyReport(
   credentials: CursorCredentials,
-  days: number = 7
+  days: number = 7,
+  options: { breakdown?: boolean; startDate?: Date; endDate?: Date } = {}
 ) {
-  const endDate = new Date();
-  const startDate = new Date();
-  startDate.setDate(startDate.getDate() - days);
+  let startDate = options.startDate;
+  let endDate = options.endDate;
 
-  // Set to start of day
-  startDate.setHours(0, 0, 0, 0);
-  endDate.setHours(23, 59, 59, 999);
+  if (!startDate || !endDate) {
+    endDate = endDate || new Date();
+    startDate = startDate || new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    // Set to start of day
+    startDate.setHours(0, 0, 0, 0);
+    endDate.setHours(23, 59, 59, 999);
+  }
 
   const events = await fetchUsageEvents(credentials, startDate, endDate);
 
@@ -82,6 +154,11 @@ export async function showDailyReport(
   logger.log(`Total Tokens: ${totalTokens.toLocaleString()}`);
   logger.log(`Total Cost: $${totalCost.toFixed(2)}`);
   logger.log('='.repeat(100) + '\n');
+
+  // Show breakdown if requested
+  if (options.breakdown) {
+    displayBreakdown(events, 'PER-MODEL BREAKDOWN');
+  }
 }
 
 /**
@@ -89,16 +166,22 @@ export async function showDailyReport(
  */
 export async function showMonthlyReport(
   credentials: CursorCredentials,
-  months: number = 3
+  months: number = 3,
+  options: { breakdown?: boolean; startDate?: Date; endDate?: Date } = {}
 ) {
-  const endDate = new Date();
-  const startDate = new Date();
-  startDate.setMonth(startDate.getMonth() - months);
+  let startDate = options.startDate;
+  let endDate = options.endDate;
 
-  // Set to start of month
-  startDate.setDate(1);
-  startDate.setHours(0, 0, 0, 0);
-  endDate.setHours(23, 59, 59, 999);
+  if (!startDate || !endDate) {
+    endDate = endDate || new Date();
+    startDate = startDate || new Date();
+    startDate.setMonth(startDate.getMonth() - months);
+
+    // Set to start of month
+    startDate.setDate(1);
+    startDate.setHours(0, 0, 0, 0);
+    endDate.setHours(23, 59, 59, 999);
+  }
 
   const events = await fetchUsageEvents(credentials, startDate, endDate);
 
@@ -138,8 +221,13 @@ export async function showMonthlyReport(
   logger.log(`Total Events: ${totalEvents}`);
   logger.log(`Total Tokens: ${totalTokens.toLocaleString()}`);
   logger.log(`Total Cost: $${totalCost.toFixed(2)}`);
-  logger.log(`Average per month: ${(totalTokens / months).toLocaleString()} tokens, $${(totalCost / months).toFixed(2)}`);
+  logger.log(`Average per month: ${(totalTokens / Math.max(1, stats.length)).toLocaleString()} tokens, $${(totalCost / Math.max(1, stats.length)).toFixed(2)}`);
   logger.log('='.repeat(100) + '\n');
+
+  // Show breakdown if requested
+  if (options.breakdown) {
+    displayBreakdown(events, 'PER-MODEL BREAKDOWN');
+  }
 }
 
 /**
