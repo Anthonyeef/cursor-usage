@@ -83,7 +83,7 @@ npm run dev -- daily --json
 - `--since DATE` - Start date (YYYY-MM-DD)
 - `--until DATE` - End date (YYYY-MM-DD)
 - `--breakdown` - Show per-model breakdown
-- `--json` - Output as JSON (in development)
+- `--json` - Output as JSON (machine-readable format)
 - `--compact` - Compact table format
 
 ### Development
@@ -199,7 +199,7 @@ PER-MODEL BREAKDOWN
 
 ### JSON Output (`--json`)
 
-JSON output provides structured data for programmatic use:
+JSON output provides clean, structured data for programmatic use (no table formatting):
 
 ```json
 {

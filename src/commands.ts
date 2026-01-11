@@ -112,62 +112,63 @@ export async function showDailyReport(
     return;
   }
 
-  logger.log('');
-
   // Group and calculate stats
   const grouped = groupByDay(events);
   const stats = calculateDailyStats(grouped);
 
-  // Display table
-  logger.log('\n' + '='.repeat(100));
-  logger.log(`DAILY USAGE REPORT (Last ${days} days)`);
-  logger.log('='.repeat(100) + '\n');
-
-  const tableData = stats.map((day) => {
-    const modelList = Array.from(day.models.entries())
-      .map(([model, count]) => `${model}(${count})`)
-      .join(', ');
-
-    return [
-      day.date,
-      day.eventCount.toString(),
-      day.totalTokens.toLocaleString(),
-      day.inputTokens.toLocaleString(),
-      day.outputTokens.toLocaleString(),
-      `$${day.totalCost.toFixed(2)}`,
-      modelList || 'N/A',
-    ];
-  });
-
-  const table = createTable(
-    ['Date', 'Events', 'Total Tokens', 'Input', 'Output', 'Cost', 'Models'],
-    tableData
-  );
-
-  logger.log(table);
-
-  // Summary
-  const totalEvents = stats.reduce((sum, day) => sum + day.eventCount, 0);
-  const totalTokens = stats.reduce((sum, day) => sum + day.totalTokens, 0);
-  const totalCost = stats.reduce((sum, day) => sum + day.totalCost, 0);
-
-  logger.log('\n' + '='.repeat(100));
-  logger.log('SUMMARY');
-  logger.log('='.repeat(100));
-  logger.log(`Total Events: ${totalEvents}`);
-  logger.log(`Total Tokens: ${totalTokens.toLocaleString()}`);
-  logger.log(`Total Cost: $${totalCost.toFixed(2)}`);
-  logger.log('='.repeat(100) + '\n');
-
-  // Show breakdown if requested
-  if (options.breakdown) {
-    displayBreakdown(events, 'PER-MODEL BREAKDOWN');
-  }
-
-  // Output JSON if requested
   if (outputJson) {
+    // Output JSON only - no table display
     const jsonOutput = statsToJSON('daily', stats, events, { breakdown: options.breakdown, period: `last ${days} days` });
     console.log(jsonOutput);
+  } else {
+    // Display table and summary
+    logger.log('');
+
+    // Display table
+    logger.log('\n' + '='.repeat(100));
+    logger.log(`DAILY USAGE REPORT (Last ${days} days)`);
+    logger.log('='.repeat(100) + '\n');
+
+    const tableData = stats.map((day) => {
+      const modelList = Array.from(day.models.entries())
+        .map(([model, count]) => `${model}(${count})`)
+        .join(', ');
+
+      return [
+        day.date,
+        day.eventCount.toString(),
+        day.totalTokens.toLocaleString(),
+        day.inputTokens.toLocaleString(),
+        day.outputTokens.toLocaleString(),
+        `$${day.totalCost.toFixed(2)}`,
+        modelList || 'N/A',
+      ];
+    });
+
+    const table = createTable(
+      ['Date', 'Events', 'Total Tokens', 'Input', 'Output', 'Cost', 'Models'],
+      tableData
+    );
+
+    logger.log(table);
+
+    // Summary
+    const totalEvents = stats.reduce((sum, day) => sum + day.eventCount, 0);
+    const totalTokens = stats.reduce((sum, day) => sum + day.totalTokens, 0);
+    const totalCost = stats.reduce((sum, day) => sum + day.totalCost, 0);
+
+    logger.log('\n' + '='.repeat(100));
+    logger.log('SUMMARY');
+    logger.log('='.repeat(100));
+    logger.log(`Total Events: ${totalEvents}`);
+    logger.log(`Total Tokens: ${totalTokens.toLocaleString()}`);
+    logger.log(`Total Cost: $${totalCost.toFixed(2)}`);
+    logger.log('='.repeat(100) + '\n');
+
+    // Show breakdown if requested
+    if (options.breakdown) {
+      displayBreakdown(events, 'PER-MODEL BREAKDOWN');
+    }
   }
 }
 
@@ -201,49 +202,50 @@ export async function showMonthlyReport(
     return;
   }
 
-  logger.log('');
-
   // Group and calculate stats
   const grouped = groupByMonth(events);
   const stats = calculateMonthlyStats(grouped);
 
-  // Display table
-  logger.log('\n' + '='.repeat(100));
-  logger.log(`MONTHLY USAGE REPORT (Last ${months} months)`);
-  logger.log('='.repeat(100) + '\n');
-
-  const tableData = formatMonthlyStatsTable(stats);
-
-  const table = createTable(
-    ['Month', 'Events', 'Total Tokens', 'Input', 'Output', 'Cost', 'Models'],
-    tableData
-  );
-
-  logger.log(table);
-
-  // Summary
-  const totalEvents = stats.reduce((sum, month) => sum + month.eventCount, 0);
-  const totalTokens = stats.reduce((sum, month) => sum + month.totalTokens, 0);
-  const totalCost = stats.reduce((sum, month) => sum + month.totalCost, 0);
-
-  logger.log('\n' + '='.repeat(100));
-  logger.log('SUMMARY');
-  logger.log('='.repeat(100));
-  logger.log(`Total Events: ${totalEvents}`);
-  logger.log(`Total Tokens: ${totalTokens.toLocaleString()}`);
-  logger.log(`Total Cost: $${totalCost.toFixed(2)}`);
-  logger.log(`Average per month: ${(totalTokens / Math.max(1, stats.length)).toLocaleString()} tokens, $${(totalCost / Math.max(1, stats.length)).toFixed(2)}`);
-  logger.log('='.repeat(100) + '\n');
-
-  // Show breakdown if requested
-  if (options.breakdown) {
-    displayBreakdown(events, 'PER-MODEL BREAKDOWN');
-  }
-
-  // Output JSON if requested
   if (outputJson) {
+    // Output JSON only - no table display
     const jsonOutput = statsToJSON('monthly', stats, events, { breakdown: options.breakdown, period: `last ${months} months` });
     console.log(jsonOutput);
+  } else {
+    // Display table and summary
+    logger.log('');
+
+    // Display table
+    logger.log('\n' + '='.repeat(100));
+    logger.log(`MONTHLY USAGE REPORT (Last ${months} months)`);
+    logger.log('='.repeat(100) + '\n');
+
+    const tableData = formatMonthlyStatsTable(stats);
+
+    const table = createTable(
+      ['Month', 'Events', 'Total Tokens', 'Input', 'Output', 'Cost', 'Models'],
+      tableData
+    );
+
+    logger.log(table);
+
+    // Summary
+    const totalEvents = stats.reduce((sum, month) => sum + month.eventCount, 0);
+    const totalTokens = stats.reduce((sum, month) => sum + month.totalTokens, 0);
+    const totalCost = stats.reduce((sum, month) => sum + month.totalCost, 0);
+
+    logger.log('\n' + '='.repeat(100));
+    logger.log('SUMMARY');
+    logger.log('='.repeat(100));
+    logger.log(`Total Events: ${totalEvents}`);
+    logger.log(`Total Tokens: ${totalTokens.toLocaleString()}`);
+    logger.log(`Total Cost: $${totalCost.toFixed(2)}`);
+    logger.log(`Average per month: ${(totalTokens / Math.max(1, stats.length)).toLocaleString()} tokens, $${(totalCost / Math.max(1, stats.length)).toFixed(2)}`);
+    logger.log('='.repeat(100) + '\n');
+
+    // Show breakdown if requested
+    if (options.breakdown) {
+      displayBreakdown(events, 'PER-MODEL BREAKDOWN');
+    }
   }
 }
 
@@ -276,49 +278,50 @@ export async function showWeeklyReport(
     return;
   }
 
-  logger.log('');
-
   // Group and calculate stats
   const grouped = groupByWeek(events);
   const stats = calculateWeeklyStats(grouped);
 
-  // Display table
-  logger.log('\n' + '='.repeat(120));
-  logger.log(`WEEKLY USAGE REPORT (Last ${weeks} weeks)`);
-  logger.log('='.repeat(120) + '\n');
-
-  const tableData = formatWeeklyStatsTable(stats);
-
-  const table = createTable(
-    ['Week', 'Events', 'Total Tokens', 'Input', 'Output', 'Cost', 'Models'],
-    tableData
-  );
-
-  logger.log(table);
-
-  // Summary
-  const totalEvents = stats.reduce((sum, week) => sum + week.eventCount, 0);
-  const totalTokens = stats.reduce((sum, week) => sum + week.totalTokens, 0);
-  const totalCost = stats.reduce((sum, week) => sum + week.totalCost, 0);
-
-  logger.log('\n' + '='.repeat(120));
-  logger.log('SUMMARY');
-  logger.log('='.repeat(120));
-  logger.log(`Total Events: ${totalEvents}`);
-  logger.log(`Total Tokens: ${totalTokens.toLocaleString()}`);
-  logger.log(`Total Cost: $${totalCost.toFixed(2)}`);
-  logger.log(`Average per week: ${(totalTokens / Math.max(1, stats.length)).toLocaleString()} tokens, $${(totalCost / Math.max(1, stats.length)).toFixed(2)}`);
-  logger.log('='.repeat(120) + '\n');
-
-  // Show breakdown if requested
-  if (options.breakdown) {
-    displayBreakdown(events, 'PER-MODEL BREAKDOWN');
-  }
-
-  // Output JSON if requested
   if (outputJson) {
+    // Output JSON only - no table display
     const jsonOutput = statsToJSON('weekly', stats, events, { breakdown: options.breakdown, period: `last ${weeks} weeks` });
     console.log(jsonOutput);
+  } else {
+    // Display table and summary
+    logger.log('');
+
+    // Display table
+    logger.log('\n' + '='.repeat(120));
+    logger.log(`WEEKLY USAGE REPORT (Last ${weeks} weeks)`);
+    logger.log('='.repeat(120) + '\n');
+
+    const tableData = formatWeeklyStatsTable(stats);
+
+    const table = createTable(
+      ['Week', 'Events', 'Total Tokens', 'Input', 'Output', 'Cost', 'Models'],
+      tableData
+    );
+
+    logger.log(table);
+
+    // Summary
+    const totalEvents = stats.reduce((sum, week) => sum + week.eventCount, 0);
+    const totalTokens = stats.reduce((sum, week) => sum + week.totalTokens, 0);
+    const totalCost = stats.reduce((sum, week) => sum + week.totalCost, 0);
+
+    logger.log('\n' + '='.repeat(120));
+    logger.log('SUMMARY');
+    logger.log('='.repeat(120));
+    logger.log(`Total Events: ${totalEvents}`);
+    logger.log(`Total Tokens: ${totalTokens.toLocaleString()}`);
+    logger.log(`Total Cost: $${totalCost.toFixed(2)}`);
+    logger.log(`Average per week: ${(totalTokens / Math.max(1, stats.length)).toLocaleString()} tokens, $${(totalCost / Math.max(1, stats.length)).toFixed(2)}`);
+    logger.log('='.repeat(120) + '\n');
+
+    // Show breakdown if requested
+    if (options.breakdown) {
+      displayBreakdown(events, 'PER-MODEL BREAKDOWN');
+    }
   }
 }
 
@@ -344,51 +347,52 @@ export async function showDateReport(
     return;
   }
 
-  logger.log('');
-
-  // Display detailed events
-  logger.log('\n' + '='.repeat(120));
-  logger.log(`USAGE EVENTS FOR ${date.toDateString()}`);
-  logger.log('='.repeat(120) + '\n');
-
-  const tableData = events.map((event) => {
-    const timestamp = new Date(event.timestamp).toLocaleTimeString();
-    return [
-      timestamp,
-      event.model,
-      event.type,
-      event.inputTokens.toLocaleString(),
-      event.outputTokens.toLocaleString(),
-      event.tokens.toLocaleString(),
-      `$${event.cost?.toFixed(4) || '0.0000'}`,
-    ];
-  });
-
-  const table = createTable(
-    ['Time', 'Model', 'Type', 'Input Tokens', 'Output Tokens', 'Total Tokens', 'Cost'],
-    tableData
-  );
-
-  logger.log(table);
-
-  // Summary
-  const totalTokens = events.reduce((sum, e) => sum + e.tokens, 0);
-  const totalCost = events.reduce((sum, e) => sum + (e.cost || 0), 0);
-
-  logger.log('\n' + '='.repeat(120));
-  logger.log(`Total Events: ${events.length}`);
-  logger.log(`Total Tokens: ${totalTokens.toLocaleString()}`);
-  logger.log(`Total Cost: $${totalCost.toFixed(2)}`);
-  logger.log('='.repeat(120) + '\n');
-
-  // Show breakdown if requested
-  if (options.breakdown) {
-    displayBreakdown(events, 'PER-MODEL BREAKDOWN');
-  }
-
-  // Output JSON if requested
   if (outputJson) {
+    // Output JSON only - no table display
     const jsonOutput = statsToJSON('today', events.map((e, i) => ({ ...e, eventIndex: i })), events, { breakdown: options.breakdown, period: 'today' });
     console.log(jsonOutput);
+  } else {
+    // Display table and summary
+    logger.log('');
+
+    // Display detailed events
+    logger.log('\n' + '='.repeat(120));
+    logger.log(`USAGE EVENTS FOR ${date.toDateString()}`);
+    logger.log('='.repeat(120) + '\n');
+
+    const tableData = events.map((event) => {
+      const timestamp = new Date(event.timestamp).toLocaleTimeString();
+      return [
+        timestamp,
+        event.model,
+        event.type,
+        event.inputTokens.toLocaleString(),
+        event.outputTokens.toLocaleString(),
+        event.tokens.toLocaleString(),
+        `$${event.cost?.toFixed(4) || '0.0000'}`,
+      ];
+    });
+
+    const table = createTable(
+      ['Time', 'Model', 'Type', 'Input Tokens', 'Output Tokens', 'Total Tokens', 'Cost'],
+      tableData
+    );
+
+    logger.log(table);
+
+    // Summary
+    const totalTokens = events.reduce((sum, e) => sum + e.tokens, 0);
+    const totalCost = events.reduce((sum, e) => sum + (e.cost || 0), 0);
+
+    logger.log('\n' + '='.repeat(120));
+    logger.log(`Total Events: ${events.length}`);
+    logger.log(`Total Tokens: ${totalTokens.toLocaleString()}`);
+    logger.log(`Total Cost: $${totalCost.toFixed(2)}`);
+    logger.log('='.repeat(120) + '\n');
+
+    // Show breakdown if requested
+    if (options.breakdown) {
+      displayBreakdown(events, 'PER-MODEL BREAKDOWN');
+    }
   }
 }
