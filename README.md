@@ -294,8 +294,3 @@ src/
 ## License
 
 MIT
-
-## Related Projects
-
-- [ccusage](https://github.com/ryoppippi/ccusage) - Claude Code usage analyzer
-- [@ccusage/amp](https://www.npmjs.com/package/@ccusage/amp) - Amp usage analyzer
