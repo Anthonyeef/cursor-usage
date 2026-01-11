@@ -4,17 +4,33 @@ A CLI tool for analyzing Cursor API usage and membership information, inspired b
 
 ## Features
 
-- ✨ Extract Cursor credentials from local database
-- 🔗 Fetch usage data from Cursor API
-- 💳 Display membership and plan usage information
-- 📊 Show usage breakdown (included vs bonus)
-- 🎯 Track percentage of included usage consumed
-- 🎨 Colorful terminal output
+- Extract Cursor credentials from local database
+- Fetch usage data from Cursor API
+- Display membership and plan usage information
+- Show usage breakdown (included vs bonus)
+- Track percentage of included usage consumed
+- Colorful terminal output
 
 ## Installation
 
 ```bash
 npm install
+```
+
+## Quick Test
+
+You can test the package without installing it locally using npx or bunx:
+
+```bash
+# Test with npx (Node.js)
+npx cursor-usage@latest
+
+# Test with bunx (Bun runtime)
+bunx cursor-usage@latest
+
+# Test specific commands
+npx cursor-usage@latest daily
+npx cursor-usage@latest monthly
 ```
 
 ## Usage
@@ -59,11 +75,11 @@ npm run build           # Compile TypeScript
 ### Summary View
 
 ```
-📊 ACCOUNT INFORMATION:
+ACCOUNT INFORMATION:
   Membership: pro
   Billing Cycle: <your-billing-cycle>
 
-📊 PLAN USAGE:
+PLAN USAGE:
   Used: 150 / 2000 (7.50%)
   Remaining: 1850
 ```
@@ -139,19 +155,6 @@ Total Cost: $0.14
 ========================================================================================================================
 ```
 
-## How It Works
-
-1. **Extracts credentials** from `~/Library/Application Support/Cursor/User/globalStorage/state.vscdb`
-   - User ID from `workbench.experiments.statsigBootstrap`
-   - Access Token from `cursorAuth/accessToken`
-   - Email and membership (optional)
-
-2. **Authenticates** with Cursor API using `WorkosCursorSessionToken` cookie
-
-3. **Fetches usage data** from `https://cursor.com/api/usage-summary`
-
-4. **Parses and displays** membership, plan usage, and billing information
-
 ## Environment Variables
 
 - `CURSOR_DATA_DIR` - Custom path to Cursor data directory (optional)
@@ -168,15 +171,6 @@ src/
 └── _consts.ts        # Constants & configuration
 ```
 
-## API Response Structure
-
-The tool fetches data from Cursor's `/api/usage-summary` endpoint which returns:
-- Billing cycle information
-- Membership type (pro, hobby, etc.)
-- Plan usage (used/limit/remaining)
-- On-demand usage status
-- Display messages about usage percentage
-
 ## Features Implemented
 
 - ✅ Daily usage reports with table formatting
@@ -187,17 +181,6 @@ The tool fetches data from Cursor's `/api/usage-summary` endpoint which returns:
 - ✅ Flexible date range querying
 - ✅ Colorized CLI output
 
-## Future Enhancements
-
-- [ ] JSON output format (`--json`)
-- [ ] Date range queries (`--from 2026-01-01 --to 2026-01-31`)
-- [ ] Weekly/monthly aggregations
-- [ ] Historical data caching
-- [ ] Cost projections
-- [ ] Team usage analysis
-- [ ] Export to CSV/JSON
-- [ ] Web dashboard
-- [ ] Webhook notifications
 
 ## License
 
