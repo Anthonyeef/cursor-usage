@@ -122,13 +122,19 @@ export async function showDailyReport(
   const grouped = groupByDay(events);
   const stats = calculateDailyStats(grouped);
 
+  const startStr = startDate.toISOString().split('T')[0];
+  const endStr = endDate.toISOString().split('T')[0];
+  const periodLabel = options.startDate || options.endDate
+    ? `${startStr} to ${endStr}`
+    : `Last ${days} days`;
+
   if (outputJson) {
     // Output JSON only - no table display
-    const jsonOutput = statsToJSON('daily', stats, events, { breakdown: options.breakdown, period: `last ${days} days` });
+    const jsonOutput = statsToJSON('daily', stats, events, { breakdown: options.breakdown, period: periodLabel });
     console.log(jsonOutput);
   } else {
     // Display title box
-    logger.log(createTitleBox(`Cursor Usage Report - Daily (Last ${days} days)`));
+    logger.log(createTitleBox(`Cursor Usage Report - Daily (${periodLabel})`));
 
     const tableData = stats.map((day) => {
       const modelList = Array.from(day.models.entries())

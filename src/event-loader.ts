@@ -34,7 +34,7 @@ export interface EventsResponse {
 }
 
 /**
- * Fetch usage events for a date range
+ * Fetch usage events for a date range (handles pagination)
  */
 export async function fetchUsageEvents(
   credentials: CursorCredentials,
@@ -42,60 +42,72 @@ export async function fetchUsageEvents(
   endDate: Date,
   pageSize: number = 100
 ): Promise<UsageEvent[]> {
+  const sessionToken = `${credentials.userId}::${credentials.accessToken}`;
+
+  const headers = {
+    Accept: 'application/json',
+    'Content-Type': 'application/json',
+    'User-Agent': USER_AGENT,
+    Origin: 'https://cursor.com',
+  };
+
+  const cookieHeader = `WorkosCursorSessionToken=${encodeURIComponent(
+    sessionToken
+  )}`;
+
+  const startTimestamp = startDate.getTime().toString();
+  const endTimestamp = endDate.getTime().toString();
+
+  const allEvents: UsageEvent[] = [];
+  let page = 1;
+
   try {
-    const sessionToken = `${credentials.userId}::${credentials.accessToken}`;
+    while (true) {
+      const body = {
+        teamId: 0,
+        startDate: startTimestamp,
+        endDate: endTimestamp,
+        page,
+        pageSize,
+      };
 
-    const headers = {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      'User-Agent': USER_AGENT,
-      Origin: 'https://cursor.com',
-    };
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT);
 
-    const cookieHeader = `WorkosCursorSessionToken=${encodeURIComponent(
-      sessionToken
-    )}`;
+      const response = await fetch(CURSOR_API_URL_EVENTS, {
+        method: 'POST',
+        headers: {
+          ...headers,
+          Cookie: cookieHeader,
+        },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
 
-    // Convert dates to millisecond timestamps
-    const startTimestamp = startDate.getTime().toString();
-    const endTimestamp = endDate.getTime().toString();
+      clearTimeout(timeoutId);
 
-    const body = {
-      teamId: 0,
-      startDate: startTimestamp,
-      endDate: endTimestamp,
-      page: 1,
-      pageSize,
-    };
+      if (!response.ok) {
+        logger.error(
+          `Events API request failed with status ${response.status}: ${response.statusText}`
+        );
+        break;
+      }
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT);
+      const data = (await response.json()) as any;
+      const pageEvents = parseEvents(data);
+      allEvents.push(...pageEvents);
 
-    const response = await fetch(CURSOR_API_URL_EVENTS, {
-      method: 'POST',
-      headers: {
-        ...headers,
-        Cookie: cookieHeader,
-      },
-      body: JSON.stringify(body),
-      signal: controller.signal,
-    });
+      if (pageEvents.length < pageSize) {
+        break;
+      }
 
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      logger.error(
-        `Events API request failed with status ${response.status}: ${response.statusText}`
-      );
-      return [];
+      page++;
     }
-
-    const data = (await response.json()) as any;
-    return parseEvents(data);
   } catch (error) {
     logger.error(`Error fetching usage events: ${String(error)}`);
-    return [];
   }
+
+  return allEvents;
 }
 
 /**
