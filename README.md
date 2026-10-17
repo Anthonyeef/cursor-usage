@@ -6,8 +6,9 @@ A CLI tool for analyzing Cursor API usage and membership information, inspired b
 
 ## Features
 
-- 📊 Extract Cursor credentials from local database
+- 📊 Extract Cursor credentials from local database (or `--token` / env)
 - 🔄 Fetch usage data from Cursor API
+- 🤖 Grok Bot weekly usage (Cursor “Sand” dashboard endpoint)
 - 📋 Display membership and plan usage information
 - 📈 Daily, weekly, and monthly usage reports
 - 💰 Token count and cost tracking
@@ -47,6 +48,33 @@ npx cursor-usage@latest monthly
 npx cursor-usage@latest daily --breakdown
 npx cursor-usage@latest weekly --json
 ```
+
+
+## Grok Bot weekly usage
+
+Default `cursor-usage` (summary) now also prints a **Grok Bot weekly** section when available.
+
+```bash
+cursor-usage              # IDE summary + Grok Bot weekly
+cursor-usage grok         # Grok Bot weekly only (alias: sand)
+cursor-usage grok --json
+```
+
+This uses Cursor’s undocumented dashboard endpoint `POST /api/dashboard/get-sand-usage-status`
+(internal product name: **Sand**), with a Connect-RPC fallback on `api2.cursor.sh`.
+The endpoint is not part of a public API and **may change or break without notice**.
+
+Auth is the same WorkOS session cookie the rest of this tool already uses. Pass a token if the
+local Cursor IDE session is missing or expired:
+
+```bash
+export CURSOR_SESSION_TOKEN='userId::your_jwt'   # or URL-encoded cookie value
+# or
+export CURSOR_ACCESS_TOKEN='your_jwt'            # user id taken from JWT sub
+cursor-usage grok --token "$CURSOR_SESSION_TOKEN"
+```
+
+This package **does not** read Grok Bot app files (`sand-secrets.json`) or the macOS Keychain.
 
 ## Usage
 
@@ -293,15 +321,24 @@ cursor-usage weekly
 
 ## Environment Variables
 
+- `CURSOR_SESSION_TOKEN` - Full session (`userId::jwt` or URL-encoded `WorkosCursorSessionToken` value)
+- `CURSOR_ACCESS_TOKEN` - Access JWT only (user id from JWT `sub` claim)
 - `CURSOR_DATA_DIR` - Custom path to Cursor data directory (optional)
 - `DEBUG` - Enable debug logging
+
+CLI flag `--token` accepts the same shapes as `CURSOR_SESSION_TOKEN`.
 
 ## Project Structure
 
 ```
 src/
-├── index.ts          # CLI entry point & display logic
-├── data-loader.ts    # Database extraction & API fetching
+├── index.ts          # CLI entry point
+├── cli.ts            # Command routing
+├── auth.ts           # Credential resolution (db / env / --token)
+├── data-loader.ts    # IDE database + usage-summary fetch
+├── sand-usage.ts     # Grok Bot (Sand) weekly usage
+├── event-loader.ts   # Detailed usage events
+├── commands.ts       # Daily / weekly / monthly reports
 ├── logger.ts         # Colored logging utilities
 ├── _types.ts         # TypeScript type definitions
 └── _consts.ts        # Constants & configuration
@@ -309,6 +346,7 @@ src/
 
 ## Features Implemented
 
+- ✅ Grok Bot weekly usage (`grok` / default summary)
 - ✅ Daily, weekly, and monthly usage reports
 - ✅ Detailed event breakdown by time
 - ✅ Token count tracking (input, output, cache)
