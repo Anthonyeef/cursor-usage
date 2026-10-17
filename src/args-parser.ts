@@ -9,19 +9,19 @@ export interface ParsedArgs {
 }
 
 /**
- * Parse command-line arguments
+ * Parse command-line arguments.
+ * Leading flags (e.g. `--token … --json`) are allowed before the command.
  */
 export function parseArgs(argv: string[]): ParsedArgs {
-  const command = argv[0] || 'summary';
   const params: string[] = [];
   const flags: Record<string, string | boolean> = {};
+  const positionals: string[] = [];
 
-  let i = 1;
+  let i = 0;
   while (i < argv.length) {
     const arg = argv[i];
 
     if (arg.startsWith('--')) {
-      // Long flag: --flag or --flag=value
       const eqIndex = arg.indexOf('=');
       if (eqIndex > -1) {
         const key = arg.substring(2, eqIndex);
@@ -29,31 +29,58 @@ export function parseArgs(argv: string[]): ParsedArgs {
         flags[key] = value;
       } else {
         const key = arg.substring(2);
-        // Check if next arg is value (not a flag)
-        if (i + 1 < argv.length && !argv[i + 1].startsWith('-')) {
-          flags[key] = argv[i + 1];
-          i++;
+        // Flags that always take a value when the next arg is present
+        const valueFlags = new Set([
+          'token',
+          'since',
+          'until',
+          'days',
+        ]);
+        if (
+          i + 1 < argv.length &&
+          !argv[i + 1].startsWith('-') &&
+          (valueFlags.has(key) || !isKnownBooleanFlag(key))
+        ) {
+          // For known boolean flags, don't consume next token
+          if (isKnownBooleanFlag(key)) {
+            flags[key] = true;
+          } else {
+            flags[key] = argv[i + 1];
+            i++;
+          }
         } else {
           flags[key] = true;
         }
       }
     } else if (arg.startsWith('-') && arg.length === 2) {
-      // Short flag: -h
       const key = arg.substring(1);
-      if (i + 1 < argv.length && !argv[i + 1].startsWith('-')) {
+      if (i + 1 < argv.length && !argv[i + 1].startsWith('-') && key !== 'h') {
         flags[key] = argv[i + 1];
         i++;
       } else {
         flags[key] = true;
       }
     } else {
-      // Positional parameter
-      params.push(arg);
+      positionals.push(arg);
     }
     i++;
   }
 
+  const command = positionals[0] || 'summary';
+  for (let p = 1; p < positionals.length; p++) {
+    params.push(positionals[p]);
+  }
+
   return { command, params, flags };
+}
+
+function isKnownBooleanFlag(key: string): boolean {
+  return (
+    key === 'json' ||
+    key === 'breakdown' ||
+    key === 'compact' ||
+    key === 'help'
+  );
 }
 
 /**

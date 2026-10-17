@@ -1,8 +1,8 @@
 {
   "name": "cursor-usage",
   "type": "module",
-  "version": "0.1.4",
-  "description": "CLI tool for analyzing Cursor usage and token consumption",
+  "version": "0.2.0",
+  "description": "CLI tool for analyzing Cursor IDE usage and Grok Bot (Sand) weekly usage",
   "author": "yifen <anthonyeef@gmail.com>",
   "license": "MIT",
   "repository": {
@@ -35,9 +35,10 @@
     "build": "tsc",
     "prepublishOnly": "npm run build",
     "start": "tsx src/index.ts",
-    "test": "vitest",
-    "lint": "eslint src/",
-    "format": "prettier --write src/"
+    "test": "tsx src/sand-usage.test.ts",
+    "lint": "tsc --noEmit",
+    "format": "prettier --write src/",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "cli-table3": "^0.6.5",

@@ -40,7 +40,7 @@ export interface UsageSummary {
   autoModelSelectedDisplayMessage: string;
   namedModelSelectedDisplayMessage: string;
   individualUsage: IndividualUsage;
-  teamUsage: Record<string, any>;
+  teamUsage: Record<string, unknown>;
 }
 
 export interface CursorCredentials {
@@ -48,6 +48,8 @@ export interface CursorCredentials {
   accessToken: string;
   email?: string;
   membership?: string;
+  /** Where the credentials came from (for DEBUG / errors). */
+  source?: 'database' | 'env' | 'flag';
 }
 
 export interface FetchOptions {
@@ -66,3 +68,27 @@ export interface MonthlyStats {
   totalCost: number;
   models: Map<string, number>;
 }
+
+/** Response from get-sand-usage-status / GetSandUsageStatus (Grok Bot weekly pool). */
+export interface SandUsageStatus {
+  usagePercent?: number;
+  hasAvailableUsage?: boolean;
+  hasNonZeroIncludedLimit?: boolean;
+  currentPeriodStart?: string;
+  nextResetTimestampUtc?: string;
+  grokPlanLabel?: string;
+  cursorPlanName?: string;
+  includedUsageSuperGrokPlan?: string;
+  billingBrand?: string;
+  onDemandSettings?: {
+    visible?: boolean;
+    eligible?: boolean;
+    enabled?: boolean;
+    dashboardUrl?: string;
+  };
+  [key: string]: unknown;
+}
+
+export type SandUsageResult =
+  | { ok: true; data: SandUsageStatus; source: 'rest' | 'rpc' }
+  | { ok: false; unavailable: true; reason: string; status?: number };

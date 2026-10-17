@@ -4,10 +4,12 @@
  */
 
 import type { CursorCredentials, UsageSummary } from './_types.js';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
+import { join } from 'node:path';
 import {
   CURSOR_API_URL,
   CURSOR_DB_PATH,
+  CURSOR_DATA_DIR_ENV,
   DB_KEY_ACCESS_TOKEN,
   DB_KEY_EMAIL,
   DB_KEY_MEMBERSHIP,
@@ -20,9 +22,6 @@ import initSqlJs from 'sql.js';
 
 let sqlJs: any = null;
 
-/**
- * Initialize SQL.js
- */
 async function initSql() {
   if (!sqlJs) {
     sqlJs = await initSqlJs();
@@ -30,9 +29,6 @@ async function initSql() {
   return sqlJs;
 }
 
-/**
- * Query database value
- */
 function queryDB(db: any, key: string): string | null {
   try {
     const stmt = db.prepare(`SELECT value FROM ItemTable WHERE key = ?`);
@@ -48,45 +44,58 @@ function queryDB(db: any, key: string): string | null {
   }
 }
 
+function resolveDbPath(): string {
+  const custom = process.env[CURSOR_DATA_DIR_ENV];
+  if (custom) {
+    return join(custom, 'User/globalStorage/state.vscdb');
+  }
+  return CURSOR_DB_PATH;
+}
+
+function cookieHeader(credentials: CursorCredentials): string {
+  const sessionToken = `${credentials.userId}::${credentials.accessToken}`;
+  return `WorkosCursorSessionToken=${encodeURIComponent(sessionToken)}`;
+}
+
 /**
- * Extract Cursor credentials from local database
+ * Extract Cursor credentials from the Cursor IDE local database only.
  */
-export async function getCursorCredentials(): Promise<CursorCredentials | null> {
+export async function getCursorCredentialsFromDatabase(): Promise<CursorCredentials | null> {
   try {
+    const dbPath = resolveDbPath();
+    if (!existsSync(dbPath)) {
+      logger.debug(`Cursor database not found at ${dbPath}`);
+      return null;
+    }
+
     const sql = await initSql();
-    const data = readFileSync(CURSOR_DB_PATH);
+    const data = readFileSync(dbPath);
     const db = new sql.Database(data);
 
-    // Get user ID from statsigBootstrap
     let userId: string | null = null;
     const bootstrapValue = queryDB(db, DB_KEY_STATSIG_BOOTSTRAP);
     if (bootstrapValue) {
       try {
         const parsed = JSON.parse(bootstrapValue);
         userId = parsed?.user?.userID;
-      } catch (e) {
+      } catch {
         logger.warn('Failed to extract user ID from statsigBootstrap');
       }
     }
 
-    // Get access token
     const accessToken = queryDB(db, DB_KEY_ACCESS_TOKEN);
-
-    // Get email
     const email = queryDB(db, DB_KEY_EMAIL) || undefined;
-
-    // Get membership
     const membership = queryDB(db, DB_KEY_MEMBERSHIP) || undefined;
 
     db.close();
 
     if (!userId) {
-      logger.error('Could not extract user ID from database');
+      logger.debug('Could not extract user ID from database');
       return null;
     }
 
     if (!accessToken) {
-      logger.error('Could not extract access token from database');
+      logger.debug('Could not extract access token from database');
       return null;
     }
 
@@ -95,45 +104,52 @@ export async function getCursorCredentials(): Promise<CursorCredentials | null> 
       accessToken,
       email,
       membership,
+      source: 'database',
     };
   } catch (error) {
-    logger.error(`Error reading database: ${String(error)}`);
+    logger.debug(`Error reading database: ${String(error)}`);
     return null;
   }
 }
 
 /**
- * Fetch usage data from Cursor API
+ * @deprecated Prefer resolveCredentials() from auth.ts
+ */
+export async function getCursorCredentials(): Promise<CursorCredentials | null> {
+  return getCursorCredentialsFromDatabase();
+}
+
+/**
+ * Fetch IDE usage summary from Cursor API
  */
 export async function fetchUsageData(
   credentials: CursorCredentials
 ): Promise<UsageSummary | null> {
   try {
-    const sessionToken = `${credentials.userId}::${credentials.accessToken}`;
-
-    const headers = {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      'User-Agent': USER_AGENT,
-    };
-
-    const cookieHeader = `WorkosCursorSessionToken=${encodeURIComponent(
-      sessionToken
-    )}`;
-
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT);
 
     const response = await fetch(CURSOR_API_URL, {
       method: 'GET',
       headers: {
-        ...headers,
-        Cookie: cookieHeader,
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        'User-Agent': USER_AGENT,
+        Cookie: cookieHeader(credentials),
       },
       signal: controller.signal,
     });
 
     clearTimeout(timeoutId);
+
+    if (response.status === 401 || response.status === 403) {
+      logger.error(
+        'Authentication failed (401). Your Cursor session is missing or expired. ' +
+          'Re-sign into the Cursor app, or pass a fresh token via --token or ' +
+          'CURSOR_SESSION_TOKEN / CURSOR_ACCESS_TOKEN.'
+      );
+      return null;
+    }
 
     if (!response.ok) {
       logger.error(
@@ -150,9 +166,6 @@ export async function fetchUsageData(
   }
 }
 
-/**
- * Validate and parse API response
- */
 function validateAndParse(data: unknown): UsageSummary | null {
   try {
     if (typeof data !== 'object' || data === null) {
@@ -166,5 +179,3 @@ function validateAndParse(data: unknown): UsageSummary | null {
     return null;
   }
 }
-
-
